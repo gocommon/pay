@@ -51,7 +51,7 @@ func (p *Alipay) Verify(in url.Values) (*pay.NoticeParams, error) {
 	}
 
 	if !ok {
-		return nil, errors.New("verify failed")
+		return nil, pay.ErrVerify
 	}
 
 	return NoticeParams(in), nil

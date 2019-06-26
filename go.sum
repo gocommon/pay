@@ -4,6 +4,8 @@ github.com/smartwalle/alipay v1.0.2 h1:y/uC+6OcVDVxKJ5Bs1qi6aogjDEXwD3XswDXJ5zJu
 github.com/smartwalle/alipay v1.0.2/go.mod h1:mLd7S8PCPq6M3yheACnoQ7nq+wGAa7y+2R0uqg0uxhc=
 github.com/smartwalle/wxpay v0.0.0-20190614093739-92129e4a17b3 h1:+tHuPMZVWNaAQcWPGO4tv2j3/gx7eTsrwsV8y37InnM=
 github.com/smartwalle/wxpay v0.0.0-20190614093739-92129e4a17b3/go.mod h1:ikRLremhdcUPyOiLrQIKyiwwBkjJgXTMzYISWRq0Qu8=
+github.com/smartwalle/wxpay v0.0.0-20190626034419-492fc0bdeb79 h1:Lq3L1gx9mB+682cKHvkz1pn50Xt0DfaXOZYhrafovcQ=
+github.com/smartwalle/wxpay v0.0.0-20190626034419-492fc0bdeb79/go.mod h1:ikRLremhdcUPyOiLrQIKyiwwBkjJgXTMzYISWRq0Qu8=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f h1:R423Cnkcp5JABoeemiGEPlt9tHXFfw5kvc0yqlxRPWo=
 golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=

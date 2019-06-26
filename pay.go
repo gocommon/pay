@@ -9,7 +9,7 @@ import (
 type Way string
 
 const (
-	// WayForm form支付方式，用于PC网页表单跳转到支付宝支付
+	// WayForm 仅支付宝 form支付方式，用于PC网页表单跳转到支付宝支付
 	WayForm Way = "form"
 	// WayQrcode 二维码支付方式，用于网页显示二维，用户扫码支付
 	WayQrcode Way = "qrcode"
@@ -17,11 +17,15 @@ const (
 	WayApp Way = "app"
 	// WayWap 手机浏览器支付
 	WayWap Way = "wap"
+	// WayJSAPI 仅微信用
+	WayJSAPI Way = "jsapi"
 )
 
 var (
 	// ErrWayNotDefine ErrWayNotDefine
 	ErrWayNotDefine = errors.New("payway not define")
+	// ErrVerify ErrVerify
+	ErrVerify = errors.New("verify failed")
 )
 
 // Payer Payer
@@ -54,6 +58,7 @@ type Order struct {
 	ID     string // 订单ID
 	Title  string // 订单详情
 	Amount int32  // 支付金额 单位分
+	IP     string // APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP。
 }
 
 // TradeType 支付方式

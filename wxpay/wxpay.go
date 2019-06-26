@@ -82,6 +82,8 @@ func (p *Wxpay) Call(way pay.Way, in pay.Order) (string, error) {
 		return p.jsAPICall(in)
 	case pay.WayWap:
 		return p.wapCall(in)
+	case pay.WayWXXCX:
+		return p.wxxcxCall(in)
 
 	}
 
@@ -135,6 +137,40 @@ type H5Info struct {
 	WapName string `json:"wap_name"`
 }
 
+// wxxcxCall 返回跳转的url地址
+func (p *Wxpay) wxxcxCall(in pay.Order) (string, error) {
+	resp, err := p.client.UnifiedOrder(wxpay.UnifiedOrderParam{
+		NotifyURL:      p.opt.NotifyURL,          // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+		Body:           in.Title,                 // 是 商品简单描述，该字段请按照规范传递，具体请见参数规定
+		OutTradeNo:     in.ID,                    // 是 商户系统内部订单号，要求32个字符内，只能是数字、大小写字母_-|*@ ，且在同一个商户号下唯一。详见商户订单号
+		TotalFee:       int(in.Amount),           // 是 订单总金额，单位为分，详见支付金额
+		SpbillCreateIP: in.IP,                    // 是 APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP。
+		TradeType:      wxpay.K_TRADE_TYPE_JSAPI, // 是 取值如下：JSAPI，NATIVE，APP等，说明详见参数规定
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if resp.ReturnCode != "SUCCESS" {
+		return "", errors.New(resp.ReturnMsg)
+	}
+	if resp.ResultCode != "SUCCESS" {
+		return "", errors.New(resp.ErrCode + ":" + resp.ErrCodeDes)
+	}
+
+	u := url.Values{}
+	u.Set("appId", p.opt.AppID)
+	u.Set("package", "prepay_id="+resp.PrepayId)
+	u.Set("nonceStr", "wxpay.getNonceStr()")
+	u.Set("timeStamp", strconv.FormatInt(time.Now().Unix(), 10))
+	u.Set("signType", "MD5")
+
+	var sign = wxpay.SignMD5(u, p.opt.APIKey)
+	u.Set("paySign", sign)
+
+	return resp.CodeURL, nil
+}
+
 // jsAPICall 返回跳转的url地址
 func (p *Wxpay) jsAPICall(in pay.Order) (string, error) {
 	resp, err := p.client.UnifiedOrder(wxpay.UnifiedOrderParam{
@@ -158,8 +194,6 @@ func (p *Wxpay) jsAPICall(in pay.Order) (string, error) {
 
 	u := url.Values{}
 	u.Set("appId", p.opt.AppID)
-	u.Set("partnerid", p.opt.MchID)
-	u.Set("prepayid", resp.PrepayId)
 	u.Set("package", "prepay_id="+resp.PrepayId)
 	u.Set("nonceStr", "wxpay.getNonceStr()")
 	u.Set("timeStamp", strconv.FormatInt(time.Now().Unix(), 10))

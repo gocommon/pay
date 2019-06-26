@@ -19,6 +19,8 @@ const (
 	WayWap Way = "wap"
 	// WayJSAPI 仅微信用
 	WayJSAPI Way = "jsapi"
+	// WayWXXCX 仅微信小程序
+	WayWXXCX Way = "wxxcx"
 )
 
 var (

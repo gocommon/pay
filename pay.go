@@ -61,21 +61,8 @@ type Order struct {
 	Title  string // 订单详情
 	Amount int32  // 支付金额 单位分
 	IP     string // APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP。
+	OpenID string // 用于jsapi支付
 }
-
-// TradeType 支付方式
-type TradeType string
-
-const (
-	// TradeTypeApp app支付
-	TradeTypeApp = "app"
-	// TradeTypeForm 表单支付
-	TradeTypeForm = "form"
-	// TradeTypeH5 h5支付
-	TradeTypeH5 = "h5"
-	// TradeTypeQrcode 扫码支付
-	TradeTypeQrcode = "qrcode"
-)
 
 // TradeStatus 交易状态
 type TradeStatus int

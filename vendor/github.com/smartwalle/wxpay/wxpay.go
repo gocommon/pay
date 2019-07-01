@@ -20,7 +20,7 @@ import (
 )
 
 type Client struct {
-	appId        string // 公众号的APPID
+	appId        string
 	apiKey       string
 	mchId        string
 	Client       *http.Client
@@ -87,7 +87,7 @@ func (this *Client) LoadCert(path string) (err error) {
 
 func (this *Client) URLValues(param Param, key string) (value url.Values, err error) {
 	var p = param.Params()
-	// p.Set("appid", this.appId) // APP, 公众号, 小程序用的appid,不同, 不能统一配置，从参数中写入
+	p.Set("appid", this.appId)
 	p.Set("mch_id", this.mchId)
 	p.Set("nonce_str", GetNonceStr())
 

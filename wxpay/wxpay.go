@@ -14,26 +14,29 @@ var _ pay.Payer = &Wxpay{}
 
 // Options Options
 type Options struct {
-	AppID        string
 	APIKey       string
 	MchID        string
 	NotifyURL    string
 	IsProduction bool
+	PublicID     string // 公从号appid
+	APPID        string // APP支付appid
+	MiniAPPID    string // 小程序支付
+
 }
 
 // Wxpay Wxpay
 type Wxpay struct {
-	opt    Options
+	Opt    Options
 	client *wxpay.Client
 }
 
 // New New
 func New(opt Options) *Wxpay {
-	cli := wxpay.New(opt.AppID, opt.APIKey, opt.MchID, opt.IsProduction)
+	cli := wxpay.New(opt.PublicID, opt.APIKey, opt.MchID, opt.IsProduction)
 
 	p := &Wxpay{
 		client: cli,
-		opt:    opt,
+		Opt:    opt,
 	}
 
 	return p
@@ -41,7 +44,7 @@ func New(opt Options) *Wxpay {
 
 // Verify 支付回调验证签名,成功返回回调参数
 func (p *Wxpay) Verify(in url.Values) (*pay.NoticeParams, error) {
-	ok, err := wxpay.VerifyResponseValues(in, p.opt.APIKey)
+	ok, err := wxpay.VerifyResponseValues(in, p.Opt.APIKey)
 	if err != nil {
 		return nil, err
 	}
@@ -95,13 +98,14 @@ func (p *Wxpay) Call(way pay.Way, in pay.Order) (string, error) {
 // qrcodeCall 返回二维码地址 ip 传服务器端ip
 func (p *Wxpay) qrcodeCall(in pay.Order) (string, error) {
 	info, err := p.client.NativePay(wxpay.UnifiedOrderParam{
-		NotifyURL:      p.opt.NotifyURL,           // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+		NotifyURL:      p.Opt.NotifyURL,           // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
 		Body:           in.Title,                  // 是 商品简单描述，该字段请按照规范传递，具体请见参数规定
 		OutTradeNo:     in.ID,                     // 是 商户系统内部订单号，要求32个字符内，只能是数字、大小写字母_-|*@ ，且在同一个商户号下唯一。详见商户订单号
 		TotalFee:       int(in.Amount),            // 是 订单总金额，单位为分，详见支付金额
 		SpbillCreateIP: in.IP,                     // 是 APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP。
 		TradeType:      wxpay.K_TRADE_TYPE_NATIVE, // 是 取值如下：JSAPI，NATIVE，APP等，说明详见参数规定
-		ProductId:      in.ID,                     // 否 trade_type=NATIVE时（即扫码支付），此参数必传。此参数为二维码中包含的商品ID，商户自行定义。
+		ProductID:      in.ID,                     // 否 trade_type=NATIVE时（即扫码支付），此参数必传。此参数为二维码中包含的商品ID，商户自行定义。
+		AppID:          p.Opt.PublicID,
 	})
 	if err != nil {
 		return "", err
@@ -112,38 +116,40 @@ func (p *Wxpay) qrcodeCall(in pay.Order) (string, error) {
 
 // appCall 返回app调起支付的参数
 func (p *Wxpay) appCall(in pay.Order) (string, error) {
-	info, err := p.client.AppPay(p.opt.AppID, wxpay.UnifiedOrderParam{
-		NotifyURL:      p.opt.NotifyURL,        // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+	rsp, err := p.client.AppPay(wxpay.UnifiedOrderParam{
+		NotifyURL:      p.Opt.NotifyURL,        // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
 		Body:           in.Title,               // 是 商品简单描述，该字段请按照规范传递，具体请见参数规定
 		OutTradeNo:     in.ID,                  // 是 商户系统内部订单号，要求32个字符内，只能是数字、大小写字母_-|*@ ，且在同一个商户号下唯一。详见商户订单号
 		TotalFee:       int(in.Amount),         // 是 订单总金额，单位为分，详见支付金额
 		SpbillCreateIP: in.IP,                  // 是 APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP。
 		TradeType:      wxpay.K_TRADE_TYPE_APP, // 是 取值如下：JSAPI，NATIVE，APP等，说明详见参数规定
-		ProductId:      in.ID,                  // 否 trade_type=NATIVE时（即扫码支付），此参数必传。此参数为二维码中包含的商品ID，商户自行定义。
+		ProductID:      in.ID,                  // 否 trade_type=NATIVE时（即扫码支付），此参数必传。此参数为二维码中包含的商品ID，商户自行定义。
+		AppID:          p.Opt.APPID,
 	})
 	if err != nil {
 		return "", err
 	}
 
-	return info.Params, nil
+	return rsp.Payinfo, nil
 }
 
 // jsAPICall 返回跳转的url地址
 func (p *Wxpay) jsAPICall(in pay.Order) (string, error) {
-	resp, err := p.client.JSAPIPay(p.opt.AppID, wxpay.UnifiedOrderParam{
-		NotifyURL:      p.opt.NotifyURL,          // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+	resp, err := p.client.JSAPIPay(wxpay.UnifiedOrderParam{
+		NotifyURL:      p.Opt.NotifyURL,          // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
 		Body:           in.Title,                 // 是 商品简单描述，该字段请按照规范传递，具体请见参数规定
 		OutTradeNo:     in.ID,                    // 是 商户系统内部订单号，要求32个字符内，只能是数字、大小写字母_-|*@ ，且在同一个商户号下唯一。详见商户订单号
 		TotalFee:       int(in.Amount),           // 是 订单总金额，单位为分，详见支付金额
 		SpbillCreateIP: in.IP,                    // 是 APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP。
 		TradeType:      wxpay.K_TRADE_TYPE_JSAPI, // 是 取值如下：JSAPI，NATIVE，APP等，说明详见参数规定
-		OpenId:         in.OpenID,
+		OpenID:         in.OpenID,
+		AppID:          p.Opt.PublicID,
 	})
 	if err != nil {
 		return "", err
 	}
 
-	return resp.Params, nil
+	return resp.Payinfo, nil
 }
 
 // wapCall 返回跳转的url地址
@@ -164,32 +170,34 @@ func (p *Wxpay) wapCall(in pay.Order) (string, error) {
 		TotalFee:       int(in.Amount),          // 是 订单总金额，单位为分，详见支付金额
 		SpbillCreateIP: "",                      // 是 APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP。
 		TradeType:      wxpay.K_TRADE_TYPE_MWEB, // 是 取值如下：JSAPI，NATIVE，APP等，说明详见参数规定
-		NotifyURL:      p.opt.NotifyURL,         // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+		NotifyURL:      p.Opt.NotifyURL,         // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
 		SceneInfo:      string(d),
+		AppID:          p.Opt.PublicID,
 	})
 	if err != nil {
 		return "", err
 	}
 
-	return resp.MWebURL, nil
+	return resp.Payinfo, nil
 }
 
 // wxxcxCall 返回跳转的url地址
 func (p *Wxpay) wxxcxCall(in pay.Order) (string, error) {
-	resp, err := p.client.MiniAppPay(p.opt.AppID, wxpay.UnifiedOrderParam{
-		NotifyURL:      p.opt.NotifyURL,          // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
+	resp, err := p.client.MiniAppPay(wxpay.UnifiedOrderParam{
+		NotifyURL:      p.Opt.NotifyURL,          // 是 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
 		Body:           in.Title,                 // 是 商品简单描述，该字段请按照规范传递，具体请见参数规定
 		OutTradeNo:     in.ID,                    // 是 商户系统内部订单号，要求32个字符内，只能是数字、大小写字母_-|*@ ，且在同一个商户号下唯一。详见商户订单号
 		TotalFee:       int(in.Amount),           // 是 订单总金额，单位为分，详见支付金额
 		SpbillCreateIP: in.IP,                    // 是 APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP。
 		TradeType:      wxpay.K_TRADE_TYPE_JSAPI, // 是 取值如下：JSAPI，NATIVE，APP等，说明详见参数规定
-		OpenId:         in.OpenID,
+		OpenID:         in.OpenID,
+		AppID:          p.Opt.MiniAPPID,
 	})
 	if err != nil {
 		return "", err
 	}
 
-	return resp.Params, nil
+	return resp.Payinfo, nil
 }
 
 // H5SceneInfo H5SceneInfo
